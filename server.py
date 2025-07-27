@@ -15,50 +15,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mapeamento 100% alinhado ao analysis.js
+
 LANDMARK_MAPPING = {
-    # Íris 
-    "leftIris": {"source": "rightEyeIris", "index": 0},  # face.annotations.rightEyeIris[0]
-    "rightIris": {"source": "leftEyeIris", "index": 0},  # face.annotations.leftEyeIris[0]
+    # Íris - CORREÇÃO: trocado left/right
+    "leftIris": 468,    # Íris esquerda (ponto central)
+    "rightIris": 473,   # Íris direita (ponto central)
     
-    # Cantos dos olhos (índices idênticos ao analysis.js)
-    "leftLateralCanthus": {"source": "rightEyeLower1", "index": 0},  # face.annotations.rightEyeLower1[0]
-    "leftMedialCanthus": {"source": "rightEyeLower1", "index": 7},   # face.annotations.rightEyeLower1[7]
-    "rightLateralCanthus": {"source": "leftEyeLower1", "index": 0},  # face.annotations.leftEyeLower1[0]
-    "rightMedialCanthus": {"source": "leftEyeLower1", "index": 7},   # face.annotations.leftEyeLower1[7]
+    # Cantos dos olhos 
+    "leftLateralCanthus": 33,     # Canto externo olho esquerdo
+    "leftMedialCanthus": 133,     # Canto interno olho esquerdo
+    "rightLateralCanthus": 263,   # Canto externo olho direito
+    "rightMedialCanthus": 362,    # Canto interno olho direito
     
-    # Pálpebras 
-    "leftEyeUpper": {"source": "rightEyeUpper0", "index": 4},  # face.annotations.rightEyeUpper0[4]
-    "leftEyeLower": {"source": "rightEyeLower0", "index": 4},  # face.annotations.rightEyeLower0[4]
-    "rightEyeUpper": {"source": "leftEyeUpper0", "index": 4},  # face.annotations.leftEyeUpper0[4]
-    "rightEyeLower": {"source": "leftEyeLower0", "index": 4},  # face.annotations.leftEyeLower0[4]
+    # Pálpebras - 
+    "leftEyeUpper": 159,    # Ponto superior olho esquerdo
+    "leftEyeLower": 145,    # Ponto inferior olho esquerdo
+    "rightEyeUpper": 386,   # Ponto superior olho direito
+    "rightEyeLower": 374,   # Ponto inferior olho direito
     
-    # Sobrancelhas 
-    "leftEyebrow": {"source": "rightEyebrowUpper", "index": 6},  # face.annotations.rightEyebrowUpper[6]
-    "rightEyebrow": {"source": "leftEyebrowUpper", "index": 6},  # face.annotations.leftEyebrowUpper[6]
+    # Sobrancelhas - 
+    "leftEyebrow": 107,     # Ponto central sobrancelha esquerda
+    "rightEyebrow": 336,    # Ponto central sobrancelha direita
     
     # Silhueta 
-    "leftZygo": {"source": "silhouette", "index": 28},  # face.annotations.silhouette[28]
-    "rightZygo": {"source": "silhouette", "index": 8},  # face.annotations.silhouette[8]
-    "leftGonial": {"source": "silhouette", "index": 24},  # face.annotations.silhouette[24]
-    "rightGonial": {"source": "silhouette", "index": 12},  # face.annotations.silhouette[12]
-    "chinLeft": {"source": "silhouette", "index": 19},  # face.annotations.silhouette[19]
-    "chinTip": {"source": "silhouette", "index": 18},  # face.annotations.silhouette[18]
-    "chinRight": {"source": "silhouette", "index": 17},  # face.annotations.silhouette[17]
+    "leftZygo": 58,      # Zigomo esquerdo
+    "rightZygo": 288,    # Zigomo direito
+    "leftGonial": 172,   # Ângulo mandibular esquerdo
+    "rightGonial": 397,  # Ângulo mandibular direito
+    "chinLeft": 200,     # Queixo lado esquerdo
+    "chinTip": 152,      # Ponta do queixo
+    "chinRight": 427,    # Queixo lado direito
     
     # Nariz 
-    "noseBottom": {"source": "noseBottom", "index": 0},  # face.annotations.noseBottom[0]
-    "leftNoseCorner": {"source": "noseRightCorner", "index": 0},  # face.annotations.noseRightCorner[0]
-    "rightNoseCorner": {"source": "noseLeftCorner", "index": 0},  # face.annotations.noseLeftCorner[0]
+    "noseBottom": 4,        # Ponta do nariz
+    "leftNoseCorner": 129,  # Narina esquerda
+    "rightNoseCorner": 358, # Narina direita
     
-    # Lábios 
-    "leftCupidBow": {"source": "lipsUpperOuter", "index": 4},  # face.annotations.lipsUpperOuter[4]
-    "rightCupidBow": {"source": "lipsUpperOuter", "index": 6},  # face.annotations.lipsUpperOuter[6]
-    "leftLipCorner": {"source": "lipsUpperOuter", "index": 0},  # face.annotations.lipsUpperOuter[0]
-    "rightLipCorner": {"source": "lipsUpperOuter", "index": 10},  # face.annotations.lipsUpperOuter[10]
-    "upperLip": {"source": "lipsUpperOuter", "index": 5},  # face.annotations.lipsUpperOuter[5]
-    "lipSeparation": {"source": "lipsUpperInner", "index": 5},  # face.annotations.lipsUpperInner[5]
-    "lowerLip": {"source": "lipsLowerOuter", "index": 4}  # face.annotations.lipsLowerOuter[4]
+    # Lábios
+    "leftCupidBow": 291,    # Arco de cupido esquerdo
+    "rightCupidBow": 61,    # Arco de cupido direito
+    "leftLipCorner": 61,    # Canto esquerdo lábios
+    "rightLipCorner": 291,  # Canto direito lábios
+    "upperLip": 0,          # Centro lábio superior
+    "lipSeparation": 13,    # Centro separação lábios
+    "lowerLip": 17          # Centro lábio inferior
 }
 
 @app.post("/detect-landmarks")
@@ -84,9 +84,9 @@ async def detect_landmarks(file: UploadFile = File(...)):
             face_landmarks = results.multi_face_landmarks[0].landmark
             landmarks = {}
             
-            for name, config in LANDMARK_MAPPING.items():
-                landmark = face_landmarks[config["index"]]
-                landmarks[name] = [landmark.x, landmark.y, landmark.z]  # Formato [x, y, z]
+            for name, index in LANDMARK_MAPPING.items():
+                landmark = face_landmarks[index]
+                landmarks[name] = [landmark.x, landmark.y, landmark.z]
             
             return {"landmarks": landmarks}
     
