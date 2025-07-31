@@ -21,48 +21,48 @@ app.add_middleware(
 
 # Mapeamento atualizado com índices precisos
 LANDMARK_MAPPING = {
-    # Íris
-    "leftIris": 468,
-    "rightIris": 473,
+    # Íris (correto)
+    "leftIris": 468,    # Íris esquerda (ponto central)
+    "rightIris": 473,   # Íris direita (ponto central)
     
-    # Cantos dos olhos
-    "leftLateralCanthus": 33,
-    "leftMedialCanthus": 133,
-    "rightLateralCanthus": 362,
-    "rightMedialCanthus": 263,
+    # Cantos dos olhos (ajustados para correspondência anatômica)
+    "leftLateralCanthus": 33,     # Canto externo olho esquerdo
+    "leftMedialCanthus": 133,     # Canto interno olho esquerdo
+    "rightLateralCanthus": 362,   # Canto externo olho direito
+    "rightMedialCanthus": 263,    # Canto interno olho direito
     
-    # Pálpebras
-    "leftEyeUpper": 159,
-    "leftEyeLower": 145,
-    "rightEyeUpper": 386,
-    "rightEyeLower": 374,
+    # Pálpebras (correto)
+    "leftEyeUpper": 159,    # Ponto superior olho esquerdo
+    "leftEyeLower": 145,    # Ponto inferior olho esquerdo
+    "rightEyeUpper": 386,   # Ponto superior olho direito
+    "rightEyeLower": 374,   # Ponto inferior olho direito
     
-    # Sobrancelhas
-    "leftEyebrow": 107,
-    "rightEyebrow": 336,
+    # Sobrancelhas (correto)
+    "leftEyebrow": 107,     # Ponto central sobrancelha esquerda
+    "rightEyebrow": 336,    # Ponto central sobrancelha direita
     
-    # Silhueta
-    "leftZygo": 58,
-    "rightZygo": 288,
-    "leftGonial": 172,
-    "rightGonial": 397,
-    "chinLeft": 200,
-    "chinTip": 152,
-    "chinRight": 427,
+    # Silhueta (ajustes importantes)
+    "leftZygo": 58,      # Zigomo esquerdo
+    "rightZygo": 288,    # Zigomo direito
+    "leftGonial": 199,   # Ângulo mandibular esquerdo (corrigido)
+    "rightGonial": 423,  # Ângulo mandibular direito (corrigido)
+    "chinLeft": 200,     # Queixo lado esquerdo
+    "chinTip": 152,      # Ponta do queixo
+    "chinRight": 427,    # Queixo lado direito
     
-    # Nariz
-    "noseBottom": 4,
-    "leftNoseCorner": 129,
-    "rightNoseCorner": 358,
+    # Nariz (correto)
+    "noseBottom": 4,        # Ponta do nariz
+    "leftNoseCorner": 129,  # Narina esquerda
+    "rightNoseCorner": 358, # Narina direita
     
-    # Lábios
-    "leftCupidBow": 291,
-    "rightCupidBow": 61,
-    "leftLipCorner": 61,
-    "rightLipCorner": 291,
-    "upperLip": 0,
-    "lipSeparation": 13,
-    "lowerLip": 17
+    # Lábios (ajustes críticos)
+    "leftCupidBow": 291,    # Arco de cupido esquerdo
+    "rightCupidBow": 61,    # Arco de cupido direito
+    "leftLipCorner": 61,    # Canto esquerdo lábios
+    "rightLipCorner": 291,  # Canto direito lábios
+    "upperLip": 13,         # Centro lábio superior (corrigido)
+    "lipSeparation": 14,    # Centro separação lábios (corrigido)
+    "lowerLip": 17          # Centro lábio inferior
 }
 
 # Cores diferentes para cada tipo de landmark
