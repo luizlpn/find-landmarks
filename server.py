@@ -1,11 +1,13 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 import mediapipe as mp
 import cv2
 import numpy as np
 import uvicorn
-import random
+import base64
+from fastapi.responses import JSONResponse
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 app = FastAPI()
 
@@ -17,144 +19,85 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mapeamento completo de landmarks
+# Mapeamento atualizado com índices precisos
 LANDMARK_MAPPING = {
-    "leftIris": 468,
-    "rightIris": 473,
-    "leftLateralCanthus": 33,
-    "leftMedialCanthus": 133,
-    "rightLateralCanthus": 362,
-    "rightMedialCanthus": 263,
-    "leftEyeUpper": 159,
-    "leftEyeLower": 145,
-    "rightEyeUpper": 386,
-    "rightEyeLower": 374,
-    "leftEyebrow": 107,
-    "rightEyebrow": 336,
-    "leftZygo": 58,
-    "rightZygo": 288,
-    "leftGonial": 199,
-    "rightGonial": 423,
-    "chinLeft": 200,
-    "chinTip": 152,
-    "chinRight": 427,
-    "noseBottom": 4,
-    "leftNoseCorner": 129,
-    "rightNoseCorner": 358,
-    "leftCupidBow": 291,
-    "rightCupidBow": 61,
-    "leftLipCorner": 61,
-    "rightLipCorner": 291,
-    "upperLip": 13,
-    "lipSeparation": 14,
-    "lowerLip": 17
+    # Íris (correto)
+    "leftIris": 468,    # Íris esquerda (ponto central)
+    "rightIris": 473,   # Íris direita (ponto central)
+    
+    # Cantos dos olhos (ajustados para correspondência anatômica)
+    "leftLateralCanthus": 33,     # Canto externo olho esquerdo
+    "leftMedialCanthus": 133,     # Canto interno olho esquerdo
+    "rightLateralCanthus": 362,   # Canto externo olho direito
+    "rightMedialCanthus": 263,    # Canto interno olho direito
+    
+    # Pálpebras (correto)
+    "leftEyeUpper": 159,    # Ponto superior olho esquerdo
+    "leftEyeLower": 145,    # Ponto inferior olho esquerdo
+    "rightEyeUpper": 386,   # Ponto superior olho direito
+    "rightEyeLower": 374,   # Ponto inferior olho direito
+    
+    # Sobrancelhas (correto)
+    "leftEyebrow": 107,     # Ponto central sobrancelha esquerda
+    "rightEyebrow": 336,    # Ponto central sobrancelha direita
+    
+    # Silhueta (ajustes importantes)
+    "leftZygo": 58,      # Zigomo esquerdo
+    "rightZygo": 288,    # Zigomo direito
+    "leftGonial": 199,   # Ângulo mandibular esquerdo (corrigido)
+    "rightGonial": 423,  # Ângulo mandibular direito (corrigido)
+    "chinLeft": 200,     # Queixo lado esquerdo
+    "chinTip": 152,      # Ponta do queixo
+    "chinRight": 427,    # Queixo lado direito
+    
+    # Nariz (correto)
+    "noseBottom": 4,        # Ponta do nariz
+    "leftNoseCorner": 129,  # Narina esquerda
+    "rightNoseCorner": 358, # Narina direita
+    
+    # Lábios (ajustes críticos)
+    "leftCupidBow": 291,    # Arco de cupido esquerdo
+    "rightCupidBow": 61,    # Arco de cupido direito
+    "leftLipCorner": 61,    # Canto esquerdo lábios
+    "rightLipCorner": 291,  # Canto direito lábios
+    "upperLip": 13,         # Centro lábio superior (corrigido)
+    "lipSeparation": 14,    # Centro separação lábios (corrigido)
+    "lowerLip": 17          # Centro lábio inferior
 }
 
-# Paleta de cores únicas para cada landmark
-COLORS = {
-    "leftIris": (255, 0, 0),        # Vermelho (BGR)
-    "rightIris": (0, 255, 0),       # Verde
-    "leftLateralCanthus": (255, 0, 255),  # Magenta
-    "leftMedialCanthus": (0, 255, 255),   # Ciano
-    "rightLateralCanthus": (255, 255, 0), # Amarelo
-    "rightMedialCanthus": (0, 0, 255),    # Azul
-    "leftEyeUpper": (128, 0, 128),  # Roxo
-    "leftEyeLower": (0, 128, 128),  # Teal
-    "rightEyeUpper": (128, 128, 0), # Oliva
-    "rightEyeLower": (128, 0, 0),   # Marrom
-    "leftEyebrow": (0, 128, 0),     # Verde escuro
-    "rightEyebrow": (0, 0, 128),    # Azul marinho
-    "leftZygo": (255, 165, 0),      # Laranja
-    "rightZygo": (0, 165, 255),     # Azul claro
-    "leftGonial": (128, 128, 128),  # Cinza
-    "rightGonial": (64, 64, 64),    # Cinza escuro
-    "chinLeft": (255, 192, 203),    # Rosa
-    "chinTip": (0, 255, 127),       # Verde primavera
-    "chinRight": (255, 215, 0),     # Ouro
-    "noseBottom": (70, 130, 180),   # Azul aço
-    "leftNoseCorner": (240, 128, 128), # Salmão
-    "rightNoseCorner": (147, 112, 219), # Púrpura médio
-    "leftCupidBow": (220, 20, 60),  # Carmesim
-    "rightCupidBow": (95, 158, 160), # Azul cadete
-    "leftLipCorner": (218, 165, 32), # Dourado
-    "rightLipCorner": (50, 205, 50), # Verde lima
-    "upperLip": (138, 43, 226),     # Violeta
-    "lipSeparation": (255, 105, 180), # Rosa quente
-    "lowerLip": (75, 0, 130)        # Índigo
+# Cores diferentes para cada tipo de landmark
+COLOR_MAPPING = {
+    "Iris": (0, 255, 0),        # Verde
+    "Olhos": (255, 0, 0),       # Azul
+    "Sobrancelhas": (0, 0, 255),# Vermelho
+    "Silhueta": (255, 255, 0),  # Ciano
+    "Nariz": (255, 0, 255),     # Magenta
+    "Lábios": (0, 255, 255),    # Amarelo
 }
 
-# Formas para cada landmark
-SHAPES = {
-    "circle": lambda img, center, color, size: cv2.circle(img, center, size, color, -1),
-    "square": lambda img, center, color, size: cv2.rectangle(
-        img, 
-        (center[0]-size, center[1]-size), 
-        (center[0]+size, center[1]+size), 
-        color, -1
-    ),
-    "triangle": lambda img, center, color, size: cv2.drawContours(
-        img, 
-        [np.array([
-            (center[0], center[1]-size),
-            (center[0]-size, center[1]+size),
-            (center[0]+size, center[1]+size)
-        ])], 
-        0, color, -1
-    ),
-    "diamond": lambda img, center, color, size: cv2.drawContours(
-        img, 
-        [np.array([
-            (center[0], center[1]-size),
-            (center[0]-size, center[1]),
-            (center[0], center[1]+size),
-            (center[0]+size, center[1])
-        ])], 
-        0, color, -1
-    )
+# Agrupamento de landmarks por categoria
+LANDMARK_CATEGORIES = {
+    "Iris": ["leftIris", "rightIris"],
+    "Olhos": ["leftLateralCanthus", "leftMedialCanthus", "rightLateralCanthus", 
+              "rightMedialCanthus", "leftEyeUpper", "leftEyeLower", 
+              "rightEyeUpper", "rightEyeLower"],
+    "Sobrancelhas": ["leftEyebrow", "rightEyebrow"],
+    "Silhueta": ["leftZygo", "rightZygo", "leftGonial", "rightGonial", 
+                 "chinLeft", "chinTip", "chinRight"],
+    "Nariz": ["noseBottom", "leftNoseCorner", "rightNoseCorner"],
+    "Lábios": ["leftCupidBow", "rightCupidBow", "leftLipCorner", 
+               "rightLipCorner", "upperLip", "lipSeparation", "lowerLip"]
 }
 
-# Atribuição de formas para cada landmark
-SHAPE_ASSIGNMENTS = {
-    "leftIris": "circle",
-    "rightIris": "circle",
-    "leftLateralCanthus": "square",
-    "leftMedialCanthus": "square",
-    "rightLateralCanthus": "square",
-    "rightMedialCanthus": "square",
-    "leftEyeUpper": "triangle",
-    "leftEyeLower": "triangle",
-    "rightEyeUpper": "triangle",
-    "rightEyeLower": "triangle",
-    "leftEyebrow": "diamond",
-    "rightEyebrow": "diamond",
-    "leftZygo": "circle",
-    "rightZygo": "circle",
-    "leftGonial": "diamond",
-    "rightGonial": "diamond",
-    "chinLeft": "triangle",
-    "chinTip": "circle",
-    "chinRight": "triangle",
-    "noseBottom": "circle",
-    "leftNoseCorner": "square",
-    "rightNoseCorner": "square",
-    "leftCupidBow": "triangle",
-    "rightCupidBow": "triangle",
-    "leftLipCorner": "diamond",
-    "rightLipCorner": "diamond",
-    "upperLip": "square",
-    "lipSeparation": "circle",
-    "lowerLip": "square"
-}
-
-@app.post("/visualize")
-async def visualize_landmarks(file: UploadFile = File(...)):
+@app.post("/detect-landmarks")
+async def detect_landmarks(file: UploadFile = File(...)):
     try:
-        # Ler a imagem
+        # Lê a imagem
         image_data = await file.read()
         image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
         height, width, _ = image.shape
         
-        # Processar com MediaPipe
+        # Processa com MediaPipe
         with mp.solutions.face_mesh.FaceMesh(
             static_image_mode=True,
             max_num_faces=1,
@@ -166,24 +109,70 @@ async def visualize_landmarks(file: UploadFile = File(...)):
             if not results.multi_face_landmarks:
                 raise HTTPException(status_code=400, detail="No face detected")
             
-            # Desenhar os landmarks
+            # Extrai os landmarks
             face_landmarks = results.multi_face_landmarks[0].landmark
+            landmarks = {}
             
             for name, index in LANDMARK_MAPPING.items():
                 landmark = face_landmarks[index]
+                landmarks[name] = [landmark.x, landmark.y, landmark.z]
+            
+            return {"landmarks": landmarks}
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/visualize-landmarks")
+async def visualize_landmarks(file: UploadFile = File(...)):
+    try:
+        # Lê a imagem
+        image_data = await file.read()
+        image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        height, width, _ = image.shape
+        
+        # Processa com MediaPipe
+        with mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=True,
+            max_num_faces=1,
+            refine_landmarks=True,
+            min_detection_confidence=0.5
+        ) as face_mesh:
+            results = face_mesh.process(image_rgb)
+            
+            if not results.multi_face_landmarks:
+                raise HTTPException(status_code=400, detail="No face detected")
+            
+            # Desenha os landmarks na imagem
+            face_landmarks = results.multi_face_landmarks[0].landmark
+            
+            # Desenha todos os landmarks do rosto (pequenos pontos)
+            for landmark in face_landmarks:
                 x = int(landmark.x * width)
                 y = int(landmark.y * height)
-                
-                color = COLORS[name]
-                shape_name = SHAPE_ASSIGNMENTS[name]
-                shape_fn = SHAPES[shape_name]
-                
-                # Desenhar o landmark com cor e forma específicas
-                shape_fn(image, (x, y), color, 6)
+                cv2.circle(image, (x, y), 1, (100, 100, 100), -1)
             
-            # Converter para JPEG
+            # Desenha os landmarks específicos com cores diferentes
+            for category, color in COLOR_MAPPING.items():
+                for landmark_name in LANDMARK_CATEGORIES[category]:
+                    if landmark_name in LANDMARK_MAPPING:
+                        index = LANDMARK_MAPPING[landmark_name]
+                        landmark = face_landmarks[index]
+                        x = int(landmark.x * width)
+                        y = int(landmark.y * height)
+                        
+                        # Desenha um círculo maior para o landmark
+                        cv2.circle(image, (x, y), 5, color, -1)
+                        
+                        # Adiciona o nome do landmark
+                        cv2.putText(image, landmark_name, (x+10, y), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+            
+            # Converte a imagem para base64 para retornar
             _, buffer = cv2.imencode('.jpg', image)
-            return Response(content=buffer.tobytes(), media_type="image/jpeg")
+            image_base64 = base64.b64encode(buffer).decode('utf-8')
+            
+            return {"image": image_base64}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
