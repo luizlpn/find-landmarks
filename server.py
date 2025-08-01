@@ -65,28 +65,37 @@ LANDMARK_MAPPING = {
     "lowerLip": 17          # Centro lábio inferior
 }
 
-# Cores diferentes para cada tipo de landmark
-COLOR_MAPPING = {
-    "Iris": (0, 255, 0),        # Verde
-    "Olhos": (255, 0, 0),       # Azul
-    "Sobrancelhas": (0, 0, 255),# Vermelho
-    "Silhueta": (255, 255, 0),  # Ciano
-    "Nariz": (255, 0, 255),     # Magenta
-    "Lábios": (0, 255, 255),    # Amarelo
-}
-
-# Agrupamento de landmarks por categoria
-LANDMARK_CATEGORIES = {
-    "Iris": ["leftIris", "rightIris"],
-    "Olhos": ["leftLateralCanthus", "leftMedialCanthus", "rightLateralCanthus", 
-              "rightMedialCanthus", "leftEyeUpper", "leftEyeLower", 
-              "rightEyeUpper", "rightEyeLower"],
-    "Sobrancelhas": ["leftEyebrow", "rightEyebrow"],
-    "Silhueta": ["leftZygo", "rightZygo", "leftGonial", "rightGonial", 
-                 "chinLeft", "chinTip", "chinRight"],
-    "Nariz": ["noseBottom", "leftNoseCorner", "rightNoseCorner"],
-    "Lábios": ["leftCupidBow", "rightCupidBow", "leftLipCorner", 
-               "rightLipCorner", "upperLip", "lipSeparation", "lowerLip"]
+# Cores únicas para cada landmark (formato BGR)
+LANDMARK_COLORS = {
+    "leftIris": (255, 0, 0),        # Azul (BGR: 255,0,0)
+    "rightIris": (0, 255, 0),       # Verde (BGR: 0,255,0)
+    "leftLateralCanthus": (0, 0, 255),     # Vermelho (BGR: 0,0,255)
+    "leftMedialCanthus": (255, 255, 0),    # Ciano (BGR: 255,255,0)
+    "rightLateralCanthus": (0, 255, 255),  # Amarelo (BGR: 0,255,255)
+    "rightMedialCanthus": (128, 0, 128),   # Roxo (BGR: 128,0,128)
+    "leftEyeUpper": (0, 165, 255),         # Laranja (BGR: 0,165,255)
+    "leftEyeLower": (203, 192, 255),       # Rosa (BGR: 203,192,255)
+    "rightEyeUpper": (130, 0, 75),         # Marrom (BGR: 130,0,75)
+    "rightEyeLower": (211, 0, 148),        # Magenta (BGR: 211,0,148)
+    "leftEyebrow": (0, 128, 128),          # Teal (BGR: 0,128,128)
+    "rightEyebrow": (128, 128, 0),         # Oliva (BGR: 128,128,0)
+    "leftZygo": (0, 69, 255),              # Vermelho-escuro (BGR: 0,69,255)
+    "rightZygo": (87, 139, 46),            # Verde-escuro (BGR: 87,139,46)
+    "leftGonial": (128, 0, 0),             # Azul-marinho (BGR: 128,0,0)
+    "rightGonial": (128, 128, 128),        # Cinza (BGR: 128,128,128)
+    "chinLeft": (0, 140, 255),             # Dourado (BGR: 0,140,255)
+    "chinTip": (226, 43, 138),             # Violeta (BGR: 226,43,138)
+    "chinRight": (133, 21, 199),           # Azul-violeta (BGR: 133,21,199)
+    "noseBottom": (42, 42, 165),           # Carmim (BGR: 42,42,165)
+    "leftNoseCorner": (80, 127, 255),      # Coral (BGR: 80,127,255)
+    "rightNoseCorner": (0, 215, 255),      # Ouro (BGR: 0,215,255)
+    "leftCupidBow": (147, 20, 255),        # Orquídea (BGR: 147,20,255)
+    "rightCupidBow": (112, 25, 25),        # Sépia (BGR: 112,25,25)
+    "leftLipCorner": (47, 107, 85),        # Verde-azulado (BGR: 47,107,85)
+    "rightLipCorner": (204, 209, 72),      # Verde-amarelado (BGR: 204,209,72)
+    "upperLip": (50, 205, 154),            # Verde-marinho (BGR: 50,205,154)
+    "lipSeparation": (92, 11, 227),        # Índigo (BGR: 92,11,227)
+    "lowerLip": (180, 105, 255)            # Rosa-choque (BGR: 180,105,255)
 }
 
 @app.post("/detect-landmarks")
@@ -152,21 +161,13 @@ async def visualize_landmarks(file: UploadFile = File(...)):
                 y = int(landmark.y * height)
                 cv2.circle(image, (x, y), 1, (100, 100, 100), -1)
             
-            # Desenha os landmarks específicos com cores diferentes
-            for category, color in COLOR_MAPPING.items():
-                for landmark_name in LANDMARK_CATEGORIES[category]:
-                    if landmark_name in LANDMARK_MAPPING:
-                        index = LANDMARK_MAPPING[landmark_name]
-                        landmark = face_landmarks[index]
-                        x = int(landmark.x * width)
-                        y = int(landmark.y * height)
-                        
-                        # Desenha um círculo maior para o landmark
-                        cv2.circle(image, (x, y), 5, color, -1)
-                        
-                        # Adiciona o nome do landmark
-                        cv2.putText(image, landmark_name, (x+10, y), 
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+            # Desenha os landmarks específicos com cores únicas
+            for landmark_name, index in LANDMARK_MAPPING.items():
+                landmark = face_landmarks[index]
+                x = int(landmark.x * width)
+                y = int(landmark.y * height)
+                color = LANDMARK_COLORS[landmark_name]
+                cv2.circle(image, (x, y), 5, color, -1)
             
             # Converte a imagem para base64 para retornar
             _, buffer = cv2.imencode('.jpg', image)
