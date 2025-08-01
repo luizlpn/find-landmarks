@@ -21,48 +21,50 @@ app.add_middleware(
 
 # Mapeamento atualizado com índices precisos
 LANDMARK_MAPPING = {
-    # Íris (correto)
-    "leftIris": 468,    # Íris esquerda (ponto central)
-    "rightIris": 473,   # Íris direita (ponto central)
-    
-    # Cantos dos olhos (ajustados para correspondência anatômica)
-    "leftLateralCanthus": 33,     # Canto externo olho esquerdo
-    "leftMedialCanthus": 133,     # Canto interno olho esquerdo
-    "rightLateralCanthus": 362,   # Canto externo olho direito
-    "rightMedialCanthus": 263,    # Canto interno olho direito
-    
-    # Pálpebras (correto)
-    "leftEyeUpper": 159,    # Ponto superior olho esquerdo
-    "leftEyeLower": 145,    # Ponto inferior olho esquerdo
-    "rightEyeUpper": 386,   # Ponto superior olho direito
-    "rightEyeLower": 374,   # Ponto inferior olho direito
-    
-    # Sobrancelhas (correto)
-    "leftEyebrow": 107,     # Ponto central sobrancelha esquerda
-    "rightEyebrow": 336,    # Ponto central sobrancelha direita
-    
-    # Silhueta (ajustes importantes)
-    "leftZygo": 58,      # Zigomo esquerdo
-    "rightZygo": 288,    # Zigomo direito
-    "leftGonial": 199,   # Ângulo mandibular esquerdo (corrigido)
-    "rightGonial": 423,  # Ângulo mandibular direito (corrigido)
-    "chinLeft": 200,     # Queixo lado esquerdo
-    "chinTip": 152,      # Ponta do queixo
-    "chinRight": 427,    # Queixo lado direito
-    
-    # Nariz (correto)
-    "noseBottom": 4,        # Ponta do nariz
-    "leftNoseCorner": 129,  # Narina esquerda
-    "rightNoseCorner": 358, # Narina direita
-    
-    # Lábios (ajustes críticos)
-    "leftCupidBow": 291,    # Arco de cupido esquerdo
-    "rightCupidBow": 61,    # Arco de cupido direito
-    "leftLipCorner": 61,    # Canto esquerdo lábios
-    "rightLipCorner": 291,  # Canto direito lábios
-    "upperLip": 13,         # Centro lábio superior (corrigido)
-    "lipSeparation": 14,    # Centro separação lábios (corrigido)
-    "lowerLip": 17          # Centro lábio inferior
+    # Íris (5 pontos: [468–472] e [473–477])
+    "leftIris":           468,  # face.annotations.rightEyeIris[0]
+    "rightIris":          473,  # face.annotations.leftEyeIris[0]
+
+    # Cantos lateral/medial dos olhos (grupo LOWER1)
+    "leftLateralCanthus": 33,   # face.annotations.rightEyeLower1[0]
+    "leftMedialCanthus":  155,  # face.annotations.rightEyeLower1[7]
+    "rightLateralCanthus":362,  # face.annotations.leftEyeLower1[0]
+    "rightMedialCanthus": 249,  # face.annotations.leftEyeLower1[7]
+
+    # Pálpebras (grupo UPPER0 e LOWER0)
+    "leftEyeUpper":       158,  # face.annotations.rightEyeUpper0[4]
+    "leftEyeLower":       145,  # face.annotations.rightEyeLower0[4]
+    "rightEyeUpper":      385,  # face.annotations.leftEyeUpper0[4]
+    "rightEyeLower":      374,  # face.annotations.leftEyeLower0[4]
+
+    # Sobrancelhas (grupo EYEBROW_UPPER)
+    "leftEyebrow":        296,  # face.annotations.rightEyebrowUpper[6]
+    "rightEyebrow":       66,   # face.annotations.leftEyebrowUpper[6]
+
+    # Zígomatico (silhouette) e gó­nio (silhouette)
+    "leftZygo":           234,  # face.annotations.silhouette[28]
+    "rightZygo":          454,  # face.annotations.silhouette[8]
+    "leftGonial":         172,  # face.annotations.silhouette[24]
+    "rightGonial":        397,  # face.annotations.silhouette[12]
+
+    # Queixo (silhouette)
+    "chinLeft":           148,  # face.annotations.silhouette[19]
+    "chinTip":            152,  # face.annotations.silhouette[18]
+    "chinRight":          377,  # face.annotations.silhouette[17]
+
+    # Nariz
+    "noseBottom":         2,    # face.annotations.noseBottom[0]
+    "leftNoseCorner":     98,   # face.annotations.noseRightCorner[0]
+    "rightNoseCorner":    327,  # face.annotations.noseLeftCorner[0]
+
+    # Lábios (grupos UPPER_OUTER, UPPER_INNER e LOWER_OUTER)
+    "leftCupidBow":       37,   # face.annotations.lipsUpperOuter[4]
+    "lipSeparation":      14,   # face.annotations.lipsUpperInner[5]
+    "rightCupidBow":      267,  # face.annotations.lipsUpperOuter[6]
+    "leftLipCorner":      61,   # face.annotations.lipsUpperOuter[0]
+    "rightLipCorner":     291,  # face.annotations.lipsUpperOuter[10]
+    "lowerLip":           17,   # face.annotations.lipsLowerOuter[4]
+    "upperLip":           0     # face.annotations.lipsUpperOuter[5]
 }
 
 # Cores únicas para cada landmark (formato BGR)
