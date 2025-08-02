@@ -17,12 +17,53 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mapeamento dos landmarks
 LANDMARK_MAPPING = {
-    "leftIris": 468,
-    "rightIris": 473,
-    # ... (mantenha o resto do mapeamento original)
+    # Íris (5 pontos: [468–472] e [473–477])
+    "leftIris":           468,  # face.annotations.rightEyeIris[0]
+    "rightIris":          473,  # face.annotations.leftEyeIris[0]
+
+    # Cantos lateral/medial dos olhos (grupo LOWER1)
+    "leftLateralCanthus": 33,   # face.annotations.rightEyeLower1[0]
+    "leftMedialCanthus":  155,  # face.annotations.rightEyeLower1[7]
+    "rightLateralCanthus":362,  # face.annotations.leftEyeLower1[0]
+    "rightMedialCanthus": 249,  # face.annotations.leftEyeLower1[7]
+
+    # Pálpebras (grupo UPPER0 e LOWER0)
+    "leftEyeUpper":       158,  # face.annotations.rightEyeUpper0[4]
+    "leftEyeLower":       145,  # face.annotations.rightEyeLower0[4]
+    "rightEyeUpper":      385,  # face.annotations.leftEyeUpper0[4]
+    "rightEyeLower":      374,  # face.annotations.leftEyeLower0[4]
+
+    # Sobrancelhas (grupo EYEBROW_UPPER)
+    "leftEyebrow":        296,  # face.annotations.rightEyebrowUpper[6]
+    "rightEyebrow":       66,   # face.annotations.leftEyebrowUpper[6]
+
+    # Zígomatico (silhouette) e gó­nio (silhouette)
+    "leftZygo":           234,  # face.annotations.silhouette[28]
+    "rightZygo":          454,  # face.annotations.silhouette[8]
+    "leftGonial":         172,  # face.annotations.silhouette[24]
+    "rightGonial":        397,  # face.annotations.silhouette[12]
+
+    # Queixo (silhouette)
+    "chinLeft":           148,  # face.annotations.silhouette[19]
+    "chinTip":            152,  # face.annotations.silhouette[18]
+    "chinRight":          377,  # face.annotations.silhouette[17]
+
+    # Nariz
+    "noseBottom":         2,    # face.annotations.noseBottom[0]
+    "leftNoseCorner":     98,   # face.annotations.noseRightCorner[0]
+    "rightNoseCorner":    327,  # face.annotations.noseLeftCorner[0]
+
+    # Lábios (grupos UPPER_OUTER, UPPER_INNER e LOWER_OUTER)
+    "leftCupidBow":       37,   # face.annotations.lipsUpperOuter[4]
+    "lipSeparation":      14,   # face.annotations.lipsUpperInner[5]
+    "rightCupidBow":      267,  # face.annotations.lipsUpperOuter[6]
+    "leftLipCorner":      61,   # face.annotations.lipsUpperOuter[0]
+    "rightLipCorner":     291,  # face.annotations.lipsUpperOuter[10]
+    "lowerLip":           17,   # face.annotations.lipsLowerOuter[4]
+    "upperLip":           0     # face.annotations.lipsUpperOuter[5]
 }
+
 
 # Cor única (#AD00FF em BGR)
 PURPLE = (255, 0, 173)
