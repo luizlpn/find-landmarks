@@ -66,55 +66,61 @@ LANDMARK_MAPPING = {
 }
 
 
-# Cor única (#AD00FF em BGR)
-PURPLE = (255, 0, 173)
-
-# Conexões entre landmarks para formar o wireframe
-# Cada tupla conecta dois pontos pelo nome (usando as chaves do LANDMARK_MAPPING)
-LANDMARK_CONNECTIONS = [
-    # Contorno do rosto
-    ("leftZygo", "leftGonial"),
-    ("leftGonial", "chinLeft"),
-    ("chinLeft", "chinTip"),
-    ("chinTip", "chinRight"),
-    ("chinRight", "rightGonial"),
-    ("rightGonial", "rightZygo"),
-
-    # Sobrancelhas
-    ("leftLateralCanthus", "leftEyebrow"),
-    ("leftEyebrow", "leftMedialCanthus"),
-    ("rightMedialCanthus", "rightEyebrow"),
-    ("rightEyebrow", "rightLateralCanthus"),
-
-    # Nariz
-    ("leftNoseCorner", "noseBottom"),
-    ("noseBottom", "rightNoseCorner"),
-    ("leftNoseCorner", "leftMedialCanthus"),
-    ("rightNoseCorner", "rightMedialCanthus"),
-
-    # Olhos
-    ("leftLateralCanthus", "leftEyeUpper"),
-    ("leftEyeUpper", "leftMedialCanthus"),
-    ("leftMedialCanthus", "leftEyeLower"),
-    ("leftEyeLower", "leftLateralCanthus"),
-
-    ("rightLateralCanthus", "rightEyeUpper"),
-    ("rightEyeUpper", "rightMedialCanthus"),
-    ("rightMedialCanthus", "rightEyeLower"),
-    ("rightEyeLower", "rightLateralCanthus"),
-
-    # Boca
-    ("leftLipCorner", "leftCupidBow"),
-    ("leftCupidBow", "lipSeparation"),
-    ("lipSeparation", "rightCupidBow"),
-    ("rightCupidBow", "rightLipCorner"),
-    ("rightLipCorner", "lowerLip"),
-    ("lowerLip", "leftLipCorner")
-]
-
 def draw_wireframe(image: np.ndarray, landmarks: Dict, width: int, height: int):
-    """Desenha as conexões entre os landmarks"""
-    for (start_name, end_name) in LANDMARK_CONNECTIONS:
+    """Desenha as conexões entre os landmarks no estilo MediaPipe (todos roxos)"""
+    # Mapeamento de conexões semânticas (similar ao MediaPipe)
+    connections = [
+        # Contorno do rosto (face oval)
+        ("leftZygo", "leftGonial"),
+        ("leftGonial", "chinLeft"),
+        ("chinLeft", "chinTip"),
+        ("chinTip", "chinRight"),
+        ("chinRight", "rightGonial"),
+        ("rightGonial", "rightZygo"),
+        
+        # Lábios
+        ("leftLipCorner", "leftCupidBow"),
+        ("leftCupidBow", "lipSeparation"),
+        ("lipSeparation", "rightCupidBow"),
+        ("rightCupidBow", "rightLipCorner"),
+        ("rightLipCorner", "lowerLip"),
+        ("lowerLip", "leftLipCorner"),
+        
+        # Olho direito
+        ("rightLateralCanthus", "rightEyeUpper"),
+        ("rightEyeUpper", "rightMedialCanthus"),
+        ("rightMedialCanthus", "rightEyeLower"),
+        ("rightEyeLower", "rightLateralCanthus"),
+        
+        # Sobrancelha direita
+        ("rightLateralCanthus", "rightEyebrow"),
+        ("rightEyebrow", "rightMedialCanthus"),
+        
+        # Olho esquerdo
+        ("leftLateralCanthus", "leftEyeUpper"),
+        ("leftEyeUpper", "leftMedialCanthus"),
+        ("leftMedialCanthus", "leftEyeLower"),
+        ("leftEyeLower", "leftLateralCanthus"),
+        
+        # Sobrancelha esquerda
+        ("leftLateralCanthus", "leftEyebrow"),
+        ("leftEyebrow", "leftMedialCanthus"),
+        
+        # Tesselation (malha facial)
+        ("leftZygo", "leftEyebrow"),
+        ("leftEyebrow", "leftMedialCanthus"),
+        ("leftMedialCanthus", "leftNoseCorner"),
+        ("leftNoseCorner", "noseBottom"),
+        ("noseBottom", "rightNoseCorner"),
+        ("rightNoseCorner", "rightMedialCanthus"),
+        ("rightMedialCanthus", "rightEyebrow"),
+        ("rightEyebrow", "rightZygo"),
+        ("leftNoseCorner", "leftCupidBow"),
+        ("rightNoseCorner", "rightCupidBow")
+    ]
+
+    # Desenha todas as conexões na cor roxa
+    for (start_name, end_name) in connections:
         try:
             start_point = (
                 int(landmarks[start_name]["pixel_coords"]["x"]),
