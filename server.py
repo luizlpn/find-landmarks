@@ -66,6 +66,8 @@ LANDMARK_MAPPING = {
 }
 
 
+PURPLE = (255, 0, 173)
+
 def draw_wireframe(image: np.ndarray, landmarks: Dict, width: int, height: int):
     """Desenha as conexões entre os landmarks no estilo MediaPipe (todos roxos)"""
     # Mapeamento de conexões semânticas (similar ao MediaPipe)
