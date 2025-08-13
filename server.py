@@ -1,4 +1,3 @@
-# server.py
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import mediapipe as mp
@@ -6,7 +5,7 @@ import cv2
 import numpy as np
 import uvicorn
 import base64
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple
 
 app = FastAPI()
 
@@ -18,72 +17,117 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------
-# LANDMARK MAPPING (os que vão no JSON)
-# ---------------------------
-LANDMARK_MAPPING: Dict[str, int] = {
-    "leftIris": 468,
-    "rightIris": 473,
-    "outerCanthusLeft": 33,
-    "leftMedialCanthus": 155,
-    "rightLateralCanthus": 362,
-    "rightMedialCanthus": 249,
-    "leftEyeUpper": 158,
-    "leftEyeLower": 145,
-    "rightEyeUpper": 385,
-    "rightEyeLower": 374,
-    "leftEyebrow": 296,
-    "rightEyebrow": 66,
-    "leftZygo": 234,
-    "rightZygo": 454,
-    "leftGonial": 172,
-    "rightGonial": 397,
-    "chinLeft": 148,
-    "chinTip": 152,
-    "chinRight": 377,
-    "noseBottom": 2,
-    "leftNoseCorner": 98,
-    "rightNoseCorner": 327,
-    "upperLip": 0
+
+LANDMARK_MAPPING = {
+   
+    "leftIris":           468,  # face.annotations.rightEyeIris[0]
+    "rightIris":          473,  # face.annotations.leftEyeIris[0]
+
+    # Cantos lateral/medial dos olhos (grupo LOWER1)
+    "leftLateralCanthus": 33,   # face.annotations.rightEyeLower1[0]
+    "leftMedialCanthus":  155,  # face.annotations.rightEyeLower1[7]
+    "rightLateralCanthus":362,  # face.annotations.leftEyeLower1[0]
+    "rightMedialCanthus": 249,  # face.annotations.leftEyeLower1[7]
+
+    # Pálpebras (grupo UPPER0 e LOWER0)
+    "leftEyeUpper":       158,  # face.annotations.rightEyeUpper0[4]
+    "leftEyeLower":       145,  # face.annotations.rightEyeLower0[4]
+    "rightEyeUpper":      385,  # face.annotations.leftEyeUpper0[4]
+    "rightEyeLower":      374,  # face.annotations.leftEyeLower0[4]
+
+    # Sobrancelhas (grupo EYEBROW_UPPER)
+    "leftEyebrow":        296,  # face.annotations.rightEyebrowUpper[6]
+    "rightEyebrow":       66,   # face.annotations.leftEyebrowUpper[6]
+
+    # Zígomatico (silhouette) e gó­nio (silhouette)
+    "leftZygo":           234,  # face.annotations.silhouette[28]
+    "rightZygo":          454,  # face.annotations.silhouette[8]
+    "leftGonial":         172,  # face.annotations.silhouette[24]
+    "rightGonial":        397,  # face.annotations.silhouette[12]
+
+    # Queixo (silhouette)
+    "chinLeft":           148,  # face.annotations.silhouette[19]
+    "chinTip":            152,  # face.annotations.silhouette[18]
+    "chinRight":          377,  # face.annotations.silhouette[17]
+
+    # Nariz
+    "noseBottom":         2,    # face.annotations.noseBottom[0]
+    "leftNoseCorner":     98,   # face.annotations.noseRightCorner[0]
+    "rightNoseCorner":    327,  # face.annotations.noseLeftCorner[0]
+
+    # Lábios (grupos UPPER_OUTER, UPPER_INNER e LOWER_OUTER)
+    "leftCupidBow":       37,   # face.annotations.lipsUpperOuter[4]
+    "lipSeparation":      14,   # face.annotations.lipsUpperInner[5]
+    "rightCupidBow":      267,  # face.annotations.lipsUpperOuter[6]
+    "leftLipCorner":      61,   # face.annotations.lipsUpperOuter[0]
+    "rightLipCorner":     291,  # face.annotations.lipsUpperOuter[10]
+    "lowerLip":           17,   # face.annotations.lipsLowerOuter[4]
+    "upperLip":           0     # face.annotations.lipsUpperOuter[5]
 }
 
-# ---------------------------
-# GRUPOS DE PONTOS SOMENTE PARA DESENHO (não entram no JSON)
-# ---------------------------
-# listas baseadas nas constantes comuns do MediaPipe (índices da mesh)
-FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109]
-LEFT_EYE = [33,7,163,144,145,153,154,155,133]
-RIGHT_EYE = [362,382,381,380,374,373,390,249,263]
-LIPS_OUTER = [61,146,91,181,84,17,314,405,321,375,291]
-NOSE_BRIDGE = [6,197,195,5,4]  # linha no dorso do nariz
 
-# Cor do wireframe e pontos (BGR)
-WIRE_COLOR = (0, 215, 255)      # amarelo-dourado para linhas
-POINT_COLOR = (255, 0, 173)     # magenta/roxo para pontos (mantive tom próximo ao anterior)
-LINE_THICKNESS = 1
-LINE_THICKNESS_BOLD = 2
-POINT_RADIUS = 4
+# Cor única (#AD00FF em BGR)
+PURPLE = (255, 0, 173)
 
-# ---------------------------
-# Utilitários
-# ---------------------------
-def to_pixel_coords(lm, width: int, height: int):
-    return int(lm.x * width), int(lm.y * height)
+# Conexões entre landmarks para formar o wireframe
+# Cada tupla conecta dois pontos pelo nome (usando as chaves do LANDMARK_MAPPING)
+LANDMARK_CONNECTIONS = [
+    # Contorno do rosto
+    ("leftZygo", "leftGonial"),
+    ("leftGonial", "chinLeft"),
+    ("chinLeft", "chinTip"),
+    ("chinTip", "chinRight"),
+    ("chinRight", "rightGonial"),
+    ("rightGonial", "rightZygo"),
 
-def distance3D(p1, p2):
-    return np.sqrt((p1['x'] - p2['x'])**2 + (p1['y'] - p2['y'])**2 + (p1['z'] - p2['z'])**2)
+    # Sobrancelhas
+    ("leftLateralCanthus", "leftEyebrow"),
+    ("leftEyebrow", "leftMedialCanthus"),
+    ("rightMedialCanthus", "rightEyebrow"),
+    ("rightEyebrow", "rightLateralCanthus"),
 
-def draw_polyline(image: np.ndarray, pts: List[tuple], closed: bool, color, thickness=1):
-    if len(pts) < 2:
-        return
-    for i in range(len(pts) - 1):
-        cv2.line(image, pts[i], pts[i+1], color, thickness, cv2.LINE_AA)
-    if closed:
-        cv2.line(image, pts[-1], pts[0], color, thickness, cv2.LINE_AA)
+    # Nariz
+    ("leftNoseCorner", "noseBottom"),
+    ("noseBottom", "rightNoseCorner"),
+    ("leftNoseCorner", "leftMedialCanthus"),
+    ("rightNoseCorner", "rightMedialCanthus"),
 
-# ---------------------------
-# Processamento da imagem
-# ---------------------------
+    # Olhos
+    ("leftLateralCanthus", "leftEyeUpper"),
+    ("leftEyeUpper", "leftMedialCanthus"),
+    ("leftMedialCanthus", "leftEyeLower"),
+    ("leftEyeLower", "leftLateralCanthus"),
+
+    ("rightLateralCanthus", "rightEyeUpper"),
+    ("rightEyeUpper", "rightMedialCanthus"),
+    ("rightMedialCanthus", "rightEyeLower"),
+    ("rightEyeLower", "rightLateralCanthus"),
+
+    # Boca
+    ("leftLipCorner", "leftCupidBow"),
+    ("leftCupidBow", "lipSeparation"),
+    ("lipSeparation", "rightCupidBow"),
+    ("rightCupidBow", "rightLipCorner"),
+    ("rightLipCorner", "lowerLip"),
+    ("lowerLip", "leftLipCorner")
+]
+
+def draw_wireframe(image: np.ndarray, landmarks: Dict, width: int, height: int):
+    """Desenha as conexões entre os landmarks"""
+    for (start_name, end_name) in LANDMARK_CONNECTIONS:
+        try:
+            start_point = (
+                int(landmarks[start_name]["pixel_coords"]["x"]),
+                int(landmarks[start_name]["pixel_coords"]["y"])
+            )
+            end_point = (
+                int(landmarks[end_name]["pixel_coords"]["x"]),
+                int(landmarks[end_name]["pixel_coords"]["y"])
+            )
+            cv2.line(image, start_point, end_point, PURPLE, 1, cv2.LINE_AA)
+        except KeyError:
+            continue  # Ignora conexões com landmarks não encontrados
+
 def process_image(image: np.ndarray) -> Dict:
     height, width, _ = image.shape
 
@@ -99,129 +143,49 @@ def process_image(image: np.ndarray) -> Dict:
             raise HTTPException(status_code=400, detail="No face detected")
 
         face_landmarks = results.multi_face_landmarks[0].landmark
+        landmarks = {}
 
-        # dicionários para retorno (landmarks -> apenas os mapeados) e para desenho (todos)
-        landmarks: Dict[str, Dict] = {}
-        draw_points: Dict[str, List[Dict]] = {}
-
-        # Extrai coordenadas dos pontos que devem ser enviados no JSON
-        for name, idx in LANDMARK_MAPPING.items():
-            lm = face_landmarks[idx]
-            px = int(lm.x * width)
-            py = int(lm.y * height)
+        # Extrai coordenadas
+        for name, index in LANDMARK_MAPPING.items():
+            landmark = face_landmarks[index]
             landmarks[name] = {
-                "x": float(lm.x),
-                "y": float(lm.y),
-                "z": float(lm.z),
-                "pixel_coords": {"x": px, "y": py}
+                "x": landmark.x,
+                "y": landmark.y,
+                "z": landmark.z,
+                "pixel_coords": {
+                    "x": int(landmark.x * width),
+                    "y": int(landmark.y * height)
+                }
             }
 
-        # calcula eye_center (média entre pálpebras superiores conforme antes)
-        try:
-            left_pt = face_landmarks[159]
-            right_pt = face_landmarks[386]
-            avg_x = (left_pt.x + right_pt.x) / 2.0
-            avg_y = (left_pt.y + right_pt.y) / 2.0
-            avg_z = (left_pt.z + right_pt.z) / 2.0
-            landmarks["eyeCenter"] = {
-                "x": float(avg_x),
-                "y": float(avg_y),
-                "z": float(avg_z),
-                "pixel_coords": {"x": int(avg_x * width), "y": int(avg_y * height)}
-            }
-        except Exception:
-            # não interrompe; apenas não adiciona se der pau
-            pass
-
-        # -----------------------
-        # Monta a imagem anotada (wireframe + pontos)
-        # -----------------------
+        # Prepara imagem com anotações
         annotated_image = image.copy()
 
-        # 1) desenhar contorno do rosto (face oval)
-        face_pts = []
-        for idx in FACE_OVAL:
-            lm = face_landmarks[idx]
-            face_pts.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, face_pts, closed=True, color=WIRE_COLOR, thickness=LINE_THICKNESS_BOLD)
+        # 1. Desenha o wireframe primeiro (para ficar atrás dos pontos)
+        draw_wireframe(annotated_image, landmarks, width, height)
 
-        # 2) olhos (desenhar left + right)
-        left_eye_pts = []
-        for idx in LEFT_EYE:
-            lm = face_landmarks[idx]
-            left_eye_pts.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, left_eye_pts, closed=True, color=WIRE_COLOR, thickness=LINE_THICKNESS)
-
-        right_eye_pts = []
-        for idx in RIGHT_EYE:
-            lm = face_landmarks[idx]
-            right_eye_pts.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, right_eye_pts, closed=True, color=WIRE_COLOR, thickness=LINE_THICKNESS)
-
-        # 3) nariz (linha no dorso + base)
-        nose_pts = []
-        for idx in NOSE_BRIDGE:
-            lm = face_landmarks[idx]
-            nose_pts.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, nose_pts, closed=False, color=WIRE_COLOR, thickness=LINE_THICKNESS)
-
-        # 4) boca (outer)
-        lips_pts = []
-        for idx in LIPS_OUTER:
-            lm = face_landmarks[idx]
-            lips_pts.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, lips_pts, closed=True, color=WIRE_COLOR, thickness=LINE_THICKNESS)
-
-        # 5) desenhar linhas finas internas para reforçar "look tecnológico"
-        #    - pequenos segmentos conectando centros dos olhos ao eyeCenter
-        try:
-            ec = landmarks["eyeCenter"]["pixel_coords"]
-            lI = landmarks["leftIris"]["pixel_coords"]
-            rI = landmarks["rightIris"]["pixel_coords"]
-            cv2.line(annotated_image, (lI["x"], lI["y"]), (ec["x"], ec["y"]), WIRE_COLOR, 1, cv2.LINE_AA)
-            cv2.line(annotated_image, (rI["x"], rI["y"]), (ec["x"], ec["y"]), WIRE_COLOR, 1, cv2.LINE_AA)
-        except Exception:
-            pass
-
-        # 6) desenhar círculos nos landmarks principais (os que aparecem no JSON)
-        for name, val in landmarks.items():
-            try:
-                px = val["pixel_coords"]["x"]
-                py = val["pixel_coords"]["y"]
-                cv2.circle(annotated_image, (px, py), POINT_RADIUS, POINT_COLOR, -1, cv2.LINE_AA)
-            except Exception:
-                continue
-
-        # 7) leve borrão / efeito de brilho sutil (opcional) - desenhei uma borda sutil em volta do rosto
-        # desenhar uma linha externa mais fina para dar sensação "scanner"
-        face_outline_thin = []
-        for idx in FACE_OVAL:
-            lm = face_landmarks[idx]
-            face_outline_thin.append((int(lm.x * width), int(lm.y * height)))
-        draw_polyline(annotated_image, face_outline_thin, closed=True, color=(200,200,200), thickness=1)
+        # 2. Desenha os pontos principais
+        for name, coords in landmarks.items():
+            x, y = coords["pixel_coords"]["x"], coords["pixel_coords"]["y"]
+            cv2.circle(annotated_image, (x, y), 5, PURPLE, -1)
+            cv2.putText(annotated_image, name, (x+10, y), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, PURPLE, 1)
 
         # Converte para base64
         _, buffer = cv2.imencode('.jpg', annotated_image)
-        encoded_img = base64.b64encode(buffer).decode('utf-8')
-
         return {
             "landmarks": landmarks,
-            "annotated_image": encoded_img,
+            "annotated_image": base64.b64encode(buffer).decode('utf-8'),
             "image_size": {"width": width, "height": height}
         }
 
-# Endpoint (mantido exatamente)
 @app.post("/analyze-face")
 async def analyze_face(file: UploadFile = File(...)):
     try:
         image = cv2.imdecode(np.frombuffer(await file.read(), np.uint8), cv2.IMREAD_COLOR)
         return {"success": True, "data": process_image(image)}
-    except HTTPException as he:
-        # repassa erro do FaceMesh (ex: no face)
-        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    # Mantive porta 8000 conforme solicitado
     uvicorn.run(app, host="0.0.0.0", port=8000)
