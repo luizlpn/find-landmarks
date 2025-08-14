@@ -25,9 +25,9 @@ LANDMARK_MAPPING = {
 
     # Cantos lateral/medial dos olhos (grupo LOWER1)
     "leftLateralCanthus": 33,   # face.annotations.rightEyeLower1[0]
-    "leftMedialCanthus":  155,  # face.annotations.rightEyeLower1[7]
-    "rightLateralCanthus":362,  # face.annotations.leftEyeLower1[0]
-    "rightMedialCanthus": 249,  # face.annotations.leftEyeLower1[7]
+    "leftMedialCanthus":  243,  # face.annotations.rightEyeLower1[7]
+    "rightLateralCanthus":263,  # face.annotations.leftEyeLower1[0]
+    "rightMedialCanthus": 463,  # face.annotations.leftEyeLower1[7]
 
     # Pálpebras (grupo UPPER0 e LOWER0)
     "leftEyeUpper":       158,  # face.annotations.rightEyeUpper0[4]
