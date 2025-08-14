@@ -36,8 +36,8 @@ LANDMARK_MAPPING = {
     "rightEyeLower":      374,  # face.annotations.leftEyeLower0[4]
 
     # Sobrancelhas (grupo EYEBROW_UPPER)
-    "leftEyebrow":        296,  # face.annotations.rightEyebrowUpper[6]
-    "rightEyebrow":       66,   # face.annotations.leftEyebrowUpper[6]
+    "leftEyebrow":        66,  # face.annotations.rightEyebrowUpper[6]
+    "rightEyebrow":       296,   # face.annotations.leftEyebrowUpper[6]
 
     # Zígomatico (silhouette) e gó­nio (silhouette)
     "leftZygo":           234,  # face.annotations.silhouette[28]
@@ -59,8 +59,8 @@ LANDMARK_MAPPING = {
     "leftCupidBow":       37,   # face.annotations.lipsUpperOuter[4]
     "lipSeparation":      14,   # face.annotations.lipsUpperInner[5]
     "rightCupidBow":      267,  # face.annotations.lipsUpperOuter[6]
-    "leftLipCorner":      61,   # face.annotations.lipsUpperOuter[0]
-    "rightLipCorner":     291,  # face.annotations.lipsUpperOuter[10]
+    "leftLipCorner":      57,   # face.annotations.lipsUpperOuter[0]
+    "rightLipCorner":     287,  # face.annotations.lipsUpperOuter[10]
     "lowerLip":           17,   # face.annotations.lipsLowerOuter[4]
     "upperLip":           0     # face.annotations.lipsUpperOuter[5]
 }
